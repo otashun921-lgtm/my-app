@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>タスク管理</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f0f13;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-bottom: 36px;
+    }
+
+    .card {
+      background: #18181f;
+      border: 1px solid #2a2a35;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: #0f0f13;
+      border: 1px solid #2a2a35;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #7c3aed; }
+    input[type="text"]::placeholder { color: #4b5563; }
+
+    select {
+      background: #0f0f13;
+      border: 1px solid #2a2a35;
+      border-radius: 10px;
+      color: #9ca3af;
+      font-size: 0.85rem;
+      padding: 10px 10px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    button.add-btn {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.2rem;
+      width: 42px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button.add-btn:hover { opacity: 0.85; transform: scale(1.05); }
+    button.add-btn:active { transform: scale(0.97); }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: none;
+      border: 1px solid #2a2a35;
+      border-radius: 20px;
+      color: #6b7280;
+      font-size: 0.8rem;
+      padding: 4px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: #7c3aed22;
+      border-color: #7c3aed;
+      color: #a78bfa;
+    }
+
+    .task-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0f0f13;
+      border: 1px solid #2a2a35;
+      border-radius: 10px;
+      padding: 12px 14px;
+      animation: slideIn 0.2s ease;
+      transition: border-color 0.2s;
+    }
+    .task-item:hover { border-color: #3a3a50; }
+    .task-item.done { opacity: 0.5; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .checkbox {
+      width: 20px; height: 20px;
+      border: 2px solid #4b5563;
+      border-radius: 6px;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+    .task-item.done .checkbox {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: white;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 0.93rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .task-item.done .task-text { text-decoration: line-through; color: #6b7280; }
+
+    .priority-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .p-high   { background: #ef4444; }
+    .p-medium { background: #f59e0b; }
+    .p-low    { background: #10b981; }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #4b5563;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .delete-btn:hover { color: #ef4444; background: #ef444420; }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #2a2a35;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .empty {
+      text-align: center;
+      color: #4b5563;
+      font-size: 0.9rem;
+      padding: 32px 0;
+    }
+
+    .progress-bar {
+      height: 3px;
+      background: #2a2a35;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7c3aed, #2563eb);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <h1>タスク管理</h1>
+  <p class="subtitle">シンプルなタスクトラッカー</p>
+
+  <div class="card">
+    <div class="input-row">
+      <input type="text" id="taskInput" placeholder="新しいタスクを入力..." maxlength="100" />
+      <select id="prioritySelect">
+        <option value="medium">普通</option>
+        <option value="high">高</option>
+        <option value="low">低</option>
+      </select>
+      <button class="add-btn" onclick="addTask()" title="追加">+</button>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all', this)">すべて</button>
+      <button class="filter-btn" onclick="setFilter('active', this)">未完了</button>
+      <button class="filter-btn" onclick="setFilter('done', this)">完了済み</button>
+    </div>
+
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="task-list" id="taskList"></div>
+
+    <div class="stats">
+      <span id="statsLeft"></span>
+      <span id="statsTotal"></span>
+    </div>
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    let filter = 'all';
+
+    function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+
+    function addTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      if (!text) { input.focus(); return; }
+      const priority = document.getElementById('prioritySelect').value;
+      tasks.unshift({ id: Date.now(), text, priority, done: false });
+      input.value = '';
+      input.focus();
+      save();
+      render();
+    }
+
+    function toggleTask(id) {
+      const t = tasks.find(t => t.id === id);
+      if (t) { t.done = !t.done; save(); render(); }
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      save(); render();
+    }
+
+    function setFilter(f, btn) {
+      filter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    }
+
+    function render() {
+      const list = document.getElementById('taskList');
+      const visible = tasks.filter(t =>
+        filter === 'all' ? true : filter === 'done' ? t.done : !t.done
+      );
+
+      const done = tasks.filter(t => t.done).length;
+      const pct = tasks.length ? (done / tasks.length * 100) : 0;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('statsLeft').textContent = `残り ${tasks.filter(t => !t.done).length} 件`;
+      document.getElementById('statsTotal').textContent = `完了 ${done} / ${tasks.length} 件`;
+
+      if (visible.length === 0) {
+        list.innerHTML = `<div class="empty">${tasks.length === 0 ? 'タスクがありません' : 'タスクがありません'}</div>`;
+        return;
+      }
+
+      list.innerHTML = visible.map(t => `
+        <div class="task-item ${t.done ? 'done' : ''}">
+          <div class="checkbox" onclick="toggleTask(${t.id})">${t.done ? '✓' : ''}</div>
+          <span class="priority-dot p-${t.priority}"></span>
+          <span class="task-text">${escHtml(t.text)}</span>
+          <button class="delete-btn" onclick="deleteTask(${t.id})" title="削除">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    document.getElementById('taskInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTask();
+    });
+
+    render();
+  </script>
+</body>
+</html>
